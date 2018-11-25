@@ -1,31 +1,31 @@
 {
-  "manifest": {
-    "publishingInformation": {
-      "locales": {
-        "en-US": {
-          "summary": "Sample Short Description",
-          "examplePhrases": [
-            "Alexa open hello world",
-            "hello",
-            "help"
-          ],
-          "name": "Hello World",
-          "description": "Sample Full Description"
-        }
-      },
-      "isAvailableWorldwide": true,
-      "testingInstructions": "Sample Testing Instructions.",
-      "category": "KNOWLEDGE_AND_TRIVIA",
-      "distributionCountries": []
-    },
-    "apis": {
-      "custom": {
-        "endpoint": {
-          "sourceDir": "lambda/custom",
-          "uri": "ask-custom-helloworld-default"
-        }
-      }
-    },
-    "manifestVersion": "1.0"
-  }
+    "manifest": {
+        "publishingInformation": {
+            "locales": {
+                "en-US": {
+                    "summary": "Show the succulent of the day from the British Cactus and Succulent Society",
+                    "examplePhrases": [
+                        "Alexa open the succulent of the day",
+                        "Alexa tell succulent of the day to show me a succulent",
+                        "Alexa ask succulent of the day for a plant"
+                    ],
+                    "name": "succulent-of-the-day",
+                    "description": "Gives you the latest information about the latest succulents from the British Cactus and Succulent Society."
+                }
+            },
+            "isAvailableWorldwide": true,
+            "testingInstructions": "Sample Testing Instructions.",
+            "category": "KNOWLEDGE_AND_TRIVIA",
+            "distributionCountries": []
+        },
+        "apis": {
+            "custom": {
+                "endpoint": {
+                    "sourceDir": "lambda/custom",
+                    "uri": "ask-custom-succulent-of-the-day-default"
+                }
+            }
+        },
+        "manifestVersion": "1.0"
+    }
 }

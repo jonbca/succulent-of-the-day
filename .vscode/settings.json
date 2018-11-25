@@ -1,0 +1,5 @@
+{
+    "jest.pathToConfig": "lambda/custom/jest.config.js",
+    "prettier.eslintIntegration": true,
+    "editor.formatOnSave": true
+}

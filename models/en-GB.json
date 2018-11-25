@@ -1,0 +1,48 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "succulent of the day",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "ShowSucculentIntent",
+                    "samples": [
+                        "show the succulent of the day",
+                        "show me the succulent of the day",
+                        "show me today's succulent",
+                        "show me today's plant",
+                        "show today's succulent",
+                        "show today's plant",
+                        "today's plant",
+                        "today's succulent",
+                        "a succulent",
+                        "a plant",
+                        "show the cactus of the day",
+                        "show me the cactus of the day",
+                        "show me today's cactus",
+                        "show today's cactus",
+                        "today's cactus",
+                        "a cactus",
+                        "tell me about the cactus of the day",
+                        "tell me about the succulent of the day",
+                        "tell me about the plant of the day",
+                        "about the cactus of the day",
+                        "about the succulent of the day",
+                        "about the plant of the day"
+                    ]
+                }
+            ]
+        }
+    }
+}
