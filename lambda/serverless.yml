@@ -1,7 +1,7 @@
 service: succulent-of-the-day
 custom:
   queue_name: SucculentTweets-${self:provider.stage}
-  api_name: SucculentTweetApi-${self:provider.stage}
+  api_name: SucculentTweetApi
 package:
   individually: true
   excludeDevDependencies: true
@@ -11,6 +11,7 @@ provider:
   memorySize: 256
   versionFunctions: false
   stage: ${opt:stage, 'dev'}
+  variableSyntax: "\\${((?!AWS)[ ~:a-zA-Z0-9._'\",\\-\\/\\(\\)]+?)}"
 functions:
   - ${file(./api/serverless.yml)}
 resources:
@@ -55,25 +56,40 @@ resources:
           Credentials:
             Fn::GetAtt: [ApiGatewaySqsIam, Arn]
           RequestParameters:
-            'integration.request.querystring.Action': "'SendMessage'"
-            'integration.request.querystring.MessageBody': 'method.request.body.message'
+            'integration.request.header.Content-Type': "'application/x-www-form-urlencoded'"
           IntegrationHttpMethod: POST
-          RequestTemplates:
-            'application/json': '{statusCode: 200}'
           IntegrationResponses:
             - StatusCode: '200'
               ResponseTemplates:
-                'application/json': '{}'
+                'application/json': '{"statusCode": "200"}'
+          RequestTemplates:
+            'application/json': "Action=SendMessage&MessageBody=$util.urlEncode($input.json('$'))"
           Uri:
-            'Fn::Join':
-              - ':'
-              - - 'arn:aws:apigateway'
-                - Ref: 'AWS::Region'
-                - 'sqs:path//'
-                - 'Fn::Join':
-                    - '/'
-                    - - Ref: 'AWS::AccountId'
-                      - ${self:custom.queue_name}
+            Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:sqs:path//${AWS::AccountId}/${self:custom.queue_name}'
+    Account:
+      Type: AWS::ApiGateway::Account
+      Properties:
+        CloudWatchRoleArn:
+          Fn::Sub: 'arn:aws:iam::${AWS::AccountId}:role/ApiGatewayCloudwatchLogging'
+    SucculentApiDeployment:
+      Type: AWS::ApiGateway::Deployment
+      DependsOn: SucculentApiMethod
+      Properties:
+        RestApiId:
+          Ref: ApiGatewayRestApi
+    SucculentApiStage:
+      Type: AWS::ApiGateway::Stage
+      Properties:
+        DeploymentId:
+          Ref: SucculentApiDeployment
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        StageName: ${self:provider.stage}
+        MethodSettings:
+          - HttpMethod: '*'
+            LoggingLevel: INFO
+            ResourcePath: '/*'
+            DataTraceEnabled: true
     ApiGatewaySqsIam:
       Type: AWS::IAM::Role
       Properties:
@@ -86,17 +102,13 @@ resources:
                 Service:
                   - apigateway.amazonaws.com
               Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
         Policies:
           - PolicyName: SucculentApiGatewayIamPolicy-${self:provider.stage}
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: Allow
-                  Resource: '*'
-                  Action:
-                    - logs:CreateLogGroup
-                    - logs:CreateLogStream
-                    - logs:PutLogEvents
                 - Effect: Allow
                   Resource:
                     Fn::GetAtt: [SucculentTweetQueue, Arn]
