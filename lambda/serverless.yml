@@ -1,0 +1,104 @@
+service: succulent-of-the-day
+custom:
+  queue_name: SucculentTweets-${self:provider.stage}
+  api_name: SucculentTweetApi-${self:provider.stage}
+package:
+  individually: true
+  excludeDevDependencies: true
+provider:
+  name: aws
+  runtime: nodejs8.10
+  memorySize: 256
+  versionFunctions: false
+  stage: ${opt:stage, 'dev'}
+functions:
+  - ${file(./api/serverless.yml)}
+resources:
+  Resources:
+    SucculentBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: Private
+    SucculentTweetQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.queue_name}
+        ReceiveMessageWaitTimeSeconds: 20
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: ${self:custom.api_name}
+    TweetApiGateway:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        ParentId:
+          Fn::GetAtt:
+            - ApiGatewayRestApi
+            - RootResourceId
+        PathPart: succulent-tweet
+        RestApiId:
+          Ref: ApiGatewayRestApi
+    SucculentApiMethod:
+      Type: AWS::ApiGateway::Method
+      DependsOn: SucculentTweetQueue
+      Properties:
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ResourceId:
+          Ref: TweetApiGateway
+        HttpMethod: POST
+        MethodResponses:
+          - StatusCode: '200'
+        AuthorizationType: NONE
+        Integration:
+          Type: AWS
+          Credentials:
+            Fn::GetAtt: [ApiGatewaySqsIam, Arn]
+          RequestParameters:
+            'integration.request.querystring.Action': "'SendMessage'"
+            'integration.request.querystring.MessageBody': 'method.request.body.message'
+          IntegrationHttpMethod: POST
+          RequestTemplates:
+            'application/json': '{statusCode: 200}'
+          IntegrationResponses:
+            - StatusCode: '200'
+              ResponseTemplates:
+                'application/json': '{}'
+          Uri:
+            'Fn::Join':
+              - ':'
+              - - 'arn:aws:apigateway'
+                - Ref: 'AWS::Region'
+                - 'sqs:path//'
+                - 'Fn::Join':
+                    - '/'
+                    - - Ref: 'AWS::AccountId'
+                      - ${self:custom.queue_name}
+    ApiGatewaySqsIam:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /app/all/
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - apigateway.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: SucculentApiGatewayIamPolicy-${self:provider.stage}
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Resource: '*'
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                - Effect: Allow
+                  Resource:
+                    Fn::GetAtt: [SucculentTweetQueue, Arn]
+                  Action:
+                    - 'sqs:SendMessage'

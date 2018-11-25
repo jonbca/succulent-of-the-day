@@ -1,0 +1,16 @@
+{
+  "extends": ["plugin:prettier/recommended", "plugin:jest/recommended"],
+  "plugins": ["jest"],
+  "env": {
+    "node": true,
+    "jest": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2017,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-console": "off"
+  }
+}

@@ -1,0 +1,20 @@
+succulentTweet:
+  handler: index.handler
+  package:
+    path: api
+    include:
+      - api/index.js
+    exclude:
+      - custom/**
+  events:
+    - sqs:
+        arn:
+          Fn::GetAtt: [SucculentTweetQueue, Arn]
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - S3:PutItem
+        - S3:GetItem
+        - S3:ListBucket
+      Resource:
+        Fn::GetAtt: [SucculentBucket, Arn]
