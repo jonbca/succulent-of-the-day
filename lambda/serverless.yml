@@ -1,7 +1,6 @@
 service: succulent-of-the-day
 custom:
-  queue_name: SucculentTweets-${self:provider.stage}
-  api_name: SucculentTweetApi
+  bucketName: succulent-of-the-day-8cffev5njytoen
 package:
   individually: true
   excludeDevDependencies: true
@@ -13,107 +12,26 @@ provider:
   stage: ${opt:stage, 'dev'}
   variableSyntax: "\\${((?!AWS)[ ~:a-zA-Z0-9._'\",\\-\\/\\(\\)]+?)}"
   environment:
-    S3_BUCKET_NAME:
-      Ref: SucculentBucket
+    S3_BUCKET_NAME: ${self:custom.bucketName}
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - s3:GetObject
+        - s3:ListBucket
+      Resource: 'arn:aws:s3:::${self:custom.bucketName}/*'
 functions:
-  - ${file(./api/serverless.yml)}
-resources:
-  Resources:
-    SucculentBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        AccessControl: Private
-    SucculentTweetQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: ${self:custom.queue_name}
-        ReceiveMessageWaitTimeSeconds: 20
-    ApiGatewayRestApi:
-      Type: AWS::ApiGateway::RestApi
-      Properties:
-        Name: ${self:custom.api_name}
-    TweetApiGateway:
-      Type: AWS::ApiGateway::Resource
-      Properties:
-        ParentId:
-          Fn::GetAtt:
-            - ApiGatewayRestApi
-            - RootResourceId
-        PathPart: succulent-tweet
-        RestApiId:
-          Ref: ApiGatewayRestApi
-    SucculentApiMethod:
-      Type: AWS::ApiGateway::Method
-      DependsOn: SucculentTweetQueue
-      Properties:
-        RestApiId:
-          Ref: ApiGatewayRestApi
-        ResourceId:
-          Ref: TweetApiGateway
-        HttpMethod: POST
-        MethodResponses:
-          - StatusCode: '200'
-        AuthorizationType: NONE
-        Integration:
-          Type: AWS
-          Credentials:
-            Fn::GetAtt: [ApiGatewaySqsIam, Arn]
-          RequestParameters:
-            'integration.request.header.Content-Type': "'application/x-www-form-urlencoded'"
-          IntegrationHttpMethod: POST
-          IntegrationResponses:
-            - StatusCode: '200'
-              ResponseTemplates:
-                'application/json': '{"statusCode": "200"}'
-          RequestTemplates:
-            'application/json': "Action=SendMessage&MessageBody=$util.urlEncode($input.json('$'))"
-          Uri:
-            Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:sqs:path//${AWS::AccountId}/${self:custom.queue_name}'
-    Account:
-      Type: AWS::ApiGateway::Account
-      Properties:
-        CloudWatchRoleArn:
-          Fn::Sub: 'arn:aws:iam::${AWS::AccountId}:role/ApiGatewayCloudwatchLogging'
-    SucculentApiDeployment:
-      Type: AWS::ApiGateway::Deployment
-      DependsOn: SucculentApiMethod
-      Properties:
-        RestApiId:
-          Ref: ApiGatewayRestApi
-    SucculentApiStage:
-      Type: AWS::ApiGateway::Stage
-      Properties:
-        DeploymentId:
-          Ref: SucculentApiDeployment
-        RestApiId:
-          Ref: ApiGatewayRestApi
-        StageName: ${self:provider.stage}
-        MethodSettings:
-          - HttpMethod: '*'
-            LoggingLevel: INFO
-            ResourcePath: '/*'
-            DataTraceEnabled: true
-    ApiGatewaySqsIam:
-      Type: AWS::IAM::Role
-      Properties:
-        Path: /app/all/
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - apigateway.amazonaws.com
-              Action: sts:AssumeRole
-        ManagedPolicyArns:
-          - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
-        Policies:
-          - PolicyName: SucculentApiGatewayIamPolicy-${self:provider.stage}
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Resource:
-                    Fn::GetAtt: [SucculentTweetQueue, Arn]
-                  Action:
-                    - 'sqs:SendMessage'
+  handler:
+    handler: custom/index.handler
+    package:
+      path: custom
+      include:
+        - custom/index.js
+        - custom/lib/**/*.js
+      exclude:
+        - custom/**/*.test.js
+    events:
+      - s3:
+          bucket: ${self:custom.bucketName}
+          rules:
+            - prefix: uploads/
+            - suffix: .jpg
