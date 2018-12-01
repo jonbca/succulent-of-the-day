@@ -12,6 +12,9 @@ provider:
   versionFunctions: false
   stage: ${opt:stage, 'dev'}
   variableSyntax: "\\${((?!AWS)[ ~:a-zA-Z0-9._'\",\\-\\/\\(\\)]+?)}"
+  environment:
+    S3_BUCKET_NAME:
+      Ref: SucculentBucket
 functions:
   - ${file(./api/serverless.yml)}
 resources:
