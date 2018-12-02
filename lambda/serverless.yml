@@ -1,9 +1,10 @@
 service: succulent-of-the-day
-custom:
-  bucketName: succulent-of-the-day-8cffev5njytoen
 package:
   individually: true
   excludeDevDependencies: true
+custom:
+  queue_name: SucculentContentAdded-${self:provider.stage}
+  api_name: SucculentContent
 provider:
   name: aws
   runtime: nodejs8.10
@@ -12,13 +13,15 @@ provider:
   stage: ${opt:stage, 'dev'}
   variableSyntax: "\\${((?!AWS)[ ~:a-zA-Z0-9._'\",\\-\\/\\(\\)]+?)}"
   environment:
-    S3_BUCKET_NAME: ${self:custom.bucketName}
+    S3_BUCKET_NAME:
+      Ref: SucculentOfTheDay
   iamRoleStatements:
     - Effect: 'Allow'
       Action:
         - s3:GetObject
         - s3:ListBucket
-      Resource: 'arn:aws:s3:::${self:custom.bucketName}/*'
+      Resource:
+        Fn::Join: ['', [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/*']]
 functions:
   handler:
     handler: custom/index.handler
@@ -29,9 +32,33 @@ functions:
         - custom/lib/**/*.js
       exclude:
         - custom/**/*.test.js
-    events:
-      - s3:
-          bucket: ${self:custom.bucketName}
-          rules:
-            - prefix: uploads/
-            - suffix: .jpg
+resources:
+  Resources:
+    SucculentOfTheDay:
+      Type: AWS::S3::Bucket
+    ReadOnlyImagesPublicAccessPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: SucculentOfTheDay
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: ReadOnlyImagesPublicAccessPolicy
+          Statement:
+            Sid: ReadOnlyImagesPublicAccessPolicy-Grant
+            Effect: 'Allow'
+            Principal: '*'
+            Action: ['s3:GetObject']
+            Resource:
+              Fn::Join:
+                - ''
+                - [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/images/*']
+    SucculentContentAddedQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.queue_name}
+        ReceiveMessageWaitTimeSeconds: 20
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Body: ${file(./api/swagger.yaml)}
