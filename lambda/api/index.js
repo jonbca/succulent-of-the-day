@@ -1,3 +1,5 @@
+const { ImageDownloader } = require('./lib/image_downloader');
+
 exports.handler = async (event, context) => {
   event.Records.forEach(record => {
     const { body } = record;
