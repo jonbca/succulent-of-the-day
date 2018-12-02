@@ -22,6 +22,11 @@ provider:
         - s3:ListBucket
       Resource:
         Fn::Join: ['', [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/*']]
+    - Effect: 'Allow'
+      Action:
+        - s3:PutObject
+      Resource:
+        Fn::Join: ['', [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/images/*']]
 functions:
   handler:
     handler: custom/index.handler
@@ -32,6 +37,21 @@ functions:
         - custom/lib/**/*.js
       exclude:
         - custom/**/*.test.js
+        - api/**
+  content-added:
+    handler: api/index.handler
+    package:
+      path: api
+      include:
+        - api/index.js
+        - api/lib/**/*.js
+      exclude:
+        - api/**/*.test.js
+        - custom/**
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [SucculentContentAddedQueue, Arn]
 resources:
   Resources:
     SucculentOfTheDay:
