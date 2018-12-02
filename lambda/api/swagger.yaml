@@ -16,7 +16,28 @@ paths:
         '200':
           description: Succulent content added
           content:
-            'application/json': {}
+            'application/json':
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: string
+      x-amazon-apigateway-request-validator: basic
+      x-amazon-apigateway-integration:
+        type: aws
+        uri: {Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:sqs:path//${AWS::AccountId}/${self:custom.queue_name}'}
+        httpMethod: post
+        credentials: {Fn::GetAtt: [ApiGatewaySqsIam, Arn]}
+        requestParameters: {'integration.request.header.Content-Type': "'application/x-www-form-urlencoded'"}
+        requestTemplates:
+          'application/json':
+            'Action=SendMessage&MessageBody=$util.urlEncode($input.json("$"))'
+        passthroughBehavior: when_no_templates
+        responses:
+          default:
+            statusCode: "200"
+            responseTemplates:
+              'application/json': '{"statusCode": "200"}'
 components:
   schemas:
     SucculentContentAdded:
@@ -33,3 +54,7 @@ components:
         imageUrl:
           type: string
           format: url
+x-amazon-apigateway-request-validators:
+  basic:
+    validateRequestParameters: false
+    validateRequestBody: true

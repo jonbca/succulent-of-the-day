@@ -60,5 +60,48 @@ resources:
         ReceiveMessageWaitTimeSeconds: 20
     ApiGatewayRestApi:
       Type: AWS::ApiGateway::RestApi
+      DependsOn: SucculentContentAddedQueue
       Properties:
         Body: ${file(./api/swagger.yaml)}
+    SucculentApiDeployment:
+      Type: AWS::ApiGateway::Deployment
+      Properties:
+        RestApiId:
+          Ref: ApiGatewayRestApi
+    SucculentApiStage:
+      Type: AWS::ApiGateway::Stage
+      Properties:
+        DeploymentId:
+          Ref: SucculentApiDeployment
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        StageName: ${self:provider.stage}
+        MethodSettings:
+          - HttpMethod: '*'
+            LoggingLevel: INFO
+            ResourcePath: '/*'
+            DataTraceEnabled: true
+    ApiGatewaySqsIam:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /app/all/
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - apigateway.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+        Policies:
+          - PolicyName: SucculentApiGatewayIamPolicy-${self:provider.stage}
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Resource:
+                    Fn::GetAtt: [SucculentContentAddedQueue, Arn]
+                  Action:
+                    - 'sqs:SendMessage'
