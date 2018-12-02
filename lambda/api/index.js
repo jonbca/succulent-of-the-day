@@ -1,4 +1,8 @@
-module.exports.handler = async (event) => {
-  console.log("Event received", event);
-  return JSON.stringify({responseCode: "200"});
+exports.handler = async (event, context) => {
+  event.Records.forEach(record => {
+    const { body } = record;
+    const content = JSON.parse(body);
+  });
+
+  return {};
 };
