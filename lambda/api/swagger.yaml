@@ -1,0 +1,35 @@
+openapi: '3.0.2'
+info:
+  title: Succulent WebHook
+  version: 'v1'
+paths:
+  '/succulent-content':
+    post:
+      operationId: succulentContentCreated
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/SucculentContentAdded'
+        required: true
+      responses:
+        '200':
+          description: Succulent content added
+          content:
+            'application/json': {}
+components:
+  schemas:
+    SucculentContentAdded:
+      type: object
+      properties:
+        row:
+          type: string
+        timestamp:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        imageUrl:
+          type: string
+          format: url

@@ -1,0 +1,22 @@
+{
+    "name": "hello-world",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "acorn": "^6.0.4",
+        "aws-sdk": "^2.368.0",
+        "eslint": "^5.9.0",
+        "eslint-config-prettier": "^3.3.0",
+        "eslint-plugin-jest": "^22.0.0",
+        "eslint-plugin-prettier": "^3.0.0",
+        "jest": "^23.6.0",
+        "prettier": "^1.15.2",
+        "prettier-eslint": "^8.8.2"
+    }
+}
