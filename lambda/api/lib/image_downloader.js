@@ -1,4 +1,6 @@
 const { URL } = require('url');
+const axios = require('axios');
+const fs = require('fs');
 
 const extractImageId = url => url.searchParams.get('id');
 const generateDownloadUrl = id => {
@@ -17,5 +19,27 @@ exports.ImageDownloader = {
     const imageId = extractImageId(driveUrl);
 
     return generateDownloadUrl(imageId);
+  },
+
+  async downloadFile(url, outputStream) {
+    try {
+      const response = await axios.default.get(url, {
+        responseType: 'stream',
+        headers: {
+          Accept: 'image/*'
+        }
+      });
+
+      return new Promise(resolve => {
+        outputStream.on('close', () => {
+          resolve();
+        });
+
+        response.data.pipe(outputStream);
+      });
+    } catch (error) {
+      console.error(`Error occurred downloading file from ${url}`, error);
+      throw error;
+    }
   }
 };
