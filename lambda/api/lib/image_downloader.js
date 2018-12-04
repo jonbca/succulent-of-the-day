@@ -1,6 +1,5 @@
 const { URL } = require('url');
 const axios = require('axios');
-const fs = require('fs');
 
 const extractImageId = url => url.searchParams.get('id');
 const generateDownloadUrl = id => {
