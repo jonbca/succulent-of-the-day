@@ -1,34 +1,54 @@
 const Alexa = require('ask-sdk-core');
 
-const LaunchRequestHandler = {
-  canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
-  },
-  handle(handlerInput) {
-    const speechText = 'Welcome to the Alexa Skills Kit, you can say hello!';
+const showSucculent = handlerInput => {
+  const succulentData = {
+    row: '5',
+    title: 'Hoya pubicalyx',
+    body:
+      'The Hoya Pubicalyx is a fast growing scrambling shrub which can form groups of blooms up to 4 inches across.',
+    imageUrl:
+      'https://drive.google.com/open?id=1EIzxzcl8J2-NTjatCA-Ht97obRgkd_q9',
+    timestamp: '09/12/2018 15:06:51',
+    cachedImageUrl:
+      'https://succulent-of-the-day-dev-succulentoftheday-b89wdhezh0be.s3.amazonaws.com/images/1EIzxzcl8J2-NTjatCA-Ht97obRgkd_q9.jpg'
+  };
+  const result = handlerInput.responseBuilder
+    .speak(succulentData.body)
+    .addDirective({
+      type: 'Alexa.Presentation.APL.RenderDocument',
+      version: '1.0',
+      document: require('./display-template.json'),
+      datasources: { succulentData }
+    })
+    .withStandardCard(
+      succulentData.title,
+      succulentData.body,
+      succulentData.cachedImageUrl
+    )
+    .getResponse();
 
-    return handlerInput.responseBuilder
-      .speak(speechText)
-      .reprompt(speechText)
-      .withSimpleCard('Hello World', speechText)
-      .getResponse();
-  }
+  return result;
 };
 
-const HelloWorldIntentHandler = {
+const ShowSucculentIntentHandler = {
   canHandle(handlerInput) {
     return (
-      handlerInput.requestEnvelope.request.type === 'IntentRequest' &&
-      handlerInput.requestEnvelope.request.intent.name === 'ShowSucculentIntent'
+      (handlerInput.requestEnvelope.request.type === 'IntentRequest' &&
+        handlerInput.requestEnvelope.request.intent.name ===
+          'ShowSucculentIntent') ||
+      handlerInput.requestEnvelope.request.type === 'LaunchRequest'
     );
   },
   handle(handlerInput) {
-    const speechText = 'Hello World!';
+    console.log(
+      JSON.stringify({ message: 'Handling succulent request', handlerInput })
+    );
 
-    return handlerInput.responseBuilder
-      .speak(speechText)
-      .withSimpleCard('Hello World', speechText)
-      .getResponse();
+    const result = showSucculent(handlerInput);
+
+    console.log(JSON.stringify(result));
+
+    return result;
   }
 };
 
@@ -40,16 +60,17 @@ const HelpIntentHandler = {
     );
   },
   handle(handlerInput) {
-    const speechText = 'You can say hello to me!';
+    const speechText = 'You can ask me to show you a succulent of the day!';
 
     return handlerInput.responseBuilder
       .speak(speechText)
       .reprompt(speechText)
-      .withSimpleCard('Hello World', speechText)
+      .withSimpleCard(skillName, speechText)
       .getResponse();
   }
 };
 
+const skillName = 'Succulent of the Day';
 const CancelAndStopIntentHandler = {
   canHandle(handlerInput) {
     return (
@@ -65,7 +86,7 @@ const CancelAndStopIntentHandler = {
 
     return handlerInput.responseBuilder
       .speak(speechText)
-      .withSimpleCard('Hello World', speechText)
+      .withSimpleCard(skillName, speechText)
       .getResponse();
   }
 };
@@ -103,8 +124,7 @@ const skillBuilder = Alexa.SkillBuilders.custom();
 
 exports.handler = skillBuilder
   .addRequestHandlers(
-    LaunchRequestHandler,
-    HelloWorldIntentHandler,
+    ShowSucculentIntentHandler,
     HelpIntentHandler,
     CancelAndStopIntentHandler,
     SessionEndedRequestHandler
