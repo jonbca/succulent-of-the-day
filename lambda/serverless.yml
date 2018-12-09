@@ -1,4 +1,6 @@
 service: succulent-of-the-day
+plugins:
+  - serverless-iam-roles-per-function
 package:
   individually: true
   excludeDevDependencies: true
@@ -15,18 +17,6 @@ provider:
   environment:
     S3_BUCKET_NAME:
       Ref: SucculentOfTheDay
-  iamRoleStatements:
-    - Effect: 'Allow'
-      Action:
-        - s3:GetObject
-        - s3:ListBucket
-        - s3:PutObject
-        - s3:PutObjectAcl
-        - s3:GetObjectAcl
-        - s3:DeleteObject
-        - s3:HeadObject
-      Resource:
-        Fn::Join: ['', [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/*']]
 functions:
   handler:
     handler: custom/index.handler
@@ -38,6 +28,14 @@ functions:
       exclude:
         - custom/**/*.test.js
         - api/**
+    iamRoleStatements:
+      - Effect: 'Allow'
+        Action:
+          - s3:GetObject
+          - s3:HeadObject
+          - s3:ListBucket
+        Resource:
+          Fn::Join: ['', [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/*']]
   content-added:
     handler: api/index.handler
     package:
@@ -52,6 +50,18 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt: [SucculentContentAddedQueue, Arn]
+    iamRoleStatements:
+      - Effect: 'Allow'
+        Action:
+          - s3:GetObject
+          - s3:ListBucket
+          - s3:PutObject
+          - s3:PutObjectAcl
+          - s3:GetObjectAcl
+          - s3:DeleteObject
+          - s3:HeadObject
+        Resource:
+          Fn::Join: ['', [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/*']]
 resources:
   Resources:
     SucculentOfTheDay:
