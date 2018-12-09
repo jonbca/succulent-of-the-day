@@ -2,7 +2,7 @@
     "manifest": {
         "publishingInformation": {
             "locales": {
-                "en-US": {
+                "en-GB": {
                     "summary": "Show the succulent of the day from the British Cactus and Succulent Society",
                     "examplePhrases": [
                         "Alexa open the succulent of the day",
@@ -10,19 +10,18 @@
                         "Alexa ask succulent of the day for a plant"
                     ],
                     "name": "succulent-of-the-day",
-                    "description": "Gives you the latest information about the latest succulents from the British Cactus and Succulent Society."
+                    "description": "Gives you the latest information about succulents from the British Cactus and Succulent Society."
                 }
             },
             "isAvailableWorldwide": true,
-            "testingInstructions": "Sample Testing Instructions.",
+            "testingInstructions": "Ask Alexa to show you the succulent of the day. Should speak some information and show a picture of a succulent on a screen-enabled device.",
             "category": "KNOWLEDGE_AND_TRIVIA",
             "distributionCountries": []
         },
         "apis": {
             "custom": {
                 "endpoint": {
-                    "sourceDir": "lambda/custom",
-                    "uri": "ask-custom-succulent-of-the-day-default"
+                    "uri": "arn:aws:lambda:us-east-1:386454917180:function:succulent-of-the-day-dev-handler"
                 }
             }
         },

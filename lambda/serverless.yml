@@ -28,6 +28,8 @@ functions:
       exclude:
         - custom/**/*.test.js
         - api/**
+    events:
+      - alexaSkill: amzn1.ask.skill.3feda312-4b2d-4545-9474-5de3108af54e
     iamRoleStatements:
       - Effect: 'Allow'
         Action:
