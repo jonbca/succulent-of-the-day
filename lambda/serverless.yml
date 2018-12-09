@@ -52,6 +52,7 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt: [SucculentContentAddedQueue, Arn]
+          enabled: true
     iamRoleStatements:
       - Effect: 'Allow'
         Action:
@@ -64,10 +65,23 @@ functions:
           - s3:HeadObject
         Resource:
           Fn::Join: ['', [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/*']]
+      - Effect: 'Allow'
+        Action:
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+          - sqs:GetQueueAttributes
+        Resource: { Fn::GetAtt: [SucculentContentAddedQueue, Arn] }
 resources:
   Resources:
     SucculentOfTheDay:
       Type: AWS::S3::Bucket
+      Properties:
+        CorsConfiguration:
+          CorsRules:
+            - AllowedMethods: [GET, HEAD]
+              AllowedOrigins:
+                - http://ask-ifr-download.s3.amazonaws.com
+                - https://ask-ifr-download.s3.amazonaws.com
     ReadOnlyImagesPublicAccessPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
