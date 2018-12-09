@@ -22,7 +22,8 @@
             "custom": {
                 "endpoint": {
                     "uri": "arn:aws:lambda:us-east-1:386454917180:function:succulent-of-the-day-dev-handler"
-                }
+                },
+                "interfaces": [{ "type": "ALEXA_PRESENTATION_APL" }]
             }
         },
         "manifestVersion": "1.0"
