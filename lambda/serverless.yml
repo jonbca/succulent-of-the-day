@@ -20,13 +20,13 @@ provider:
       Action:
         - s3:GetObject
         - s3:ListBucket
+        - s3:PutObject
+        - s3:PutObjectAcl
+        - s3:GetObjectAcl
+        - s3:DeleteObject
+        - s3:HeadObject
       Resource:
         Fn::Join: ['', [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/*']]
-    - Effect: 'Allow'
-      Action:
-        - s3:PutObject
-      Resource:
-        Fn::Join: ['', [{ Fn::GetAtt: [SucculentOfTheDay, Arn] }, '/images/*']]
 functions:
   handler:
     handler: custom/index.handler
@@ -78,6 +78,13 @@ resources:
       Properties:
         QueueName: ${self:custom.queue_name}
         ReceiveMessageWaitTimeSeconds: 20
+        RedrivePolicy:
+          deadLetterTargetArn: { Fn::GetAtt: [SucculentContentAddedDLQ, Arn] }
+          maxReceiveCount: 5
+    SucculentContentAddedDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.queue_name}-dlq
     ApiGatewayRestApi:
       Type: AWS::ApiGateway::RestApi
       DependsOn: SucculentContentAddedQueue

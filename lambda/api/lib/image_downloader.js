@@ -19,14 +19,22 @@ const generateDownloadUrl = id => {
 
 exports.ImageDownloader = {
   getDownloadUrl(rawDriveUrl) {
+    console.log(`extracting id from raw url ${rawDriveUrl}`);
     const driveUrl = new URL(rawDriveUrl);
     const imageId = extractImageId(driveUrl);
 
-    return generateDownloadUrl(imageId);
+    console.log(`found image id ${imageId}`);
+
+    const downloadUrl = generateDownloadUrl(imageId);
+
+    console.log(`generated download url ${downloadUrl}`);
+
+    return downloadUrl;
   },
 
   async downloadFile(url, outputStream) {
     try {
+      console.log(`downloading file from ${url}`);
       const response = await axios.default.get(url, {
         responseType: 'stream',
         headers: {
@@ -36,10 +44,12 @@ exports.ImageDownloader = {
 
       return new Promise(resolve => {
         outputStream.on('close', () => {
+          console.log(`download complete for ${url}`);
           resolve();
         });
 
         response.data.pipe(outputStream);
+        return null;
       });
     } catch (error) {
       console.error(`Error occurred downloading file from ${url}`, error);
@@ -48,6 +58,8 @@ exports.ImageDownloader = {
   },
 
   async uploadImage(key, stream) {
+    console.log(`beginning upload of image ${key}`);
+
     return objectStore
       .putObject({
         Bucket: process.env.S3_BUCKET_NAME,
@@ -55,19 +67,25 @@ exports.ImageDownloader = {
         Key: `images/${key}.jpg`,
         ContentType: 'image/jpeg'
       })
-      .promise();
+      .promise()
+      .then(() => console.log(`completed upload of image ${key}`));
   },
 
   async transferFile(url) {
+    console.log(`transferring file from url ${url}`);
+
     return tmp.withFile(async ({ path }) => {
-      const downloadUrl = generateDownloadUrl(url);
-      const keyName = encodeURIComponent(extractImageId(url));
+      const downloadUrl = this.getDownloadUrl(url);
+      console.log(`using download url ${downloadUrl}`);
+      const keyName = encodeURIComponent(extractImageId(new URL(url)));
 
       await this.downloadFile(downloadUrl, fs.createWriteStream(path));
       await this.uploadImage(keyName, fs.createReadStream(path));
 
       return new URL(
-        `https://${S3_BUCKET_NAME}.s3.amazonaws.com/images/${keyName}.jpg`
+        `https://${
+          process.env.S3_BUCKET_NAME
+        }.s3.amazonaws.com/images/${keyName}.jpg`
       ).toString();
     });
   }
