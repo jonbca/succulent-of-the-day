@@ -19,7 +19,7 @@ const HelloWorldIntentHandler = {
   canHandle(handlerInput) {
     return (
       handlerInput.requestEnvelope.request.type === 'IntentRequest' &&
-      handlerInput.requestEnvelope.request.intent.name === 'HelloWorldIntent'
+      handlerInput.requestEnvelope.request.intent.name === 'ShowSucculentIntent'
     );
   },
   handle(handlerInput) {
